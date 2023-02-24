@@ -1,0 +1,302 @@
+Sets
+V "Set of nodes";
+
+alias(v,i,j,u);
+
+Set
+E(i,j) "Set of edges";
+
+parameter
+d(u,v) ""
+t(i,j)
+c(i,j)
+;
+
+ 
+*Variable decisions*
+free variable G "objective function";
+binary variable Y(i,j)"1, if edge [i,j] is built (0 otherwise)";
+positive variable x(u,i,j) "number of passenger starting their trip in node u and traveling from node i to node j";
+*Information of the Problem*
+Set
+V
+/
+city1
+city2
+city3
+city4
+city5
+city6
+city7
+city8
+city9
+city10
+city11
+city12
+city13
+city14
+city15
+/
+E(v,v)
+/city1.city2
+city1.city4
+city1.city6
+city2.city1
+city2.city3
+city2.city5
+city2.city8
+city2.city10
+city3.city2
+city3.city11
+city3.city13
+city4.city1
+city4.city7
+city4.city12
+city5.city2
+city5.city7
+city5.city11
+city6.city1
+city6.city8
+city6.city14
+city6.city15
+city7.city4
+city7.city5
+city7.city10
+city8.city2
+city8.city6
+city8.city9
+city8.city13
+city9.city8
+city9.city11
+city10.city2
+city10.city7
+city11.city3
+city11.city5
+city11.city9
+city12.city4
+city12.city14
+city13.city3
+city13.city8
+city13.city15
+city14.city6
+city14.city12
+city15.city6
+city15.city13
+/ ;
+
+table
+d(u,v)
+*demand*
+               city1 city2  city3   city4    city5 city6 city7 city8 city9 city10 city11 city12 city13 city14 city15
+ city1         4410  250    400      100      150  350    450   600   125   645    500    270    300    50     220
+ city2         250   4125   500      250      400  325    150   300   220   380    430    150    290   180     300
+ city3         400   500    3900     300      100  100    250   500   200   270    310    240    110   370     250
+ city4         100   250    300      3850     150  400    300   170   330   260    400    260    190   330     410
+ city5         150   400    100      150      3110 230    370   100   160   400    360    170    140   200     180
+ city6         350   325    100      400      230  4015   180   200   220   300    480    250    420   300     260
+ city7         450   150    250      300      370  180    3150  310   300    80     70    140    130   240     180
+ city8         600   300    500      170      100  200    310   3740  290   140    240    340    180    80     290
+ city9         125   220    200      330      160  220    300   290   3485  360    410    280    240   220     130
+ city10        645   380    270      260      400  300     80   140   360   4245   210    240    300   400     260
+ city11        500   430    310      400      360  480     70   240   410   210    4590   380    150   460     190
+ city12        270   150    240      260      170  250    140   340   280   240    380    3430   230   280     100
+ city13        300   290    110      190      140  420    130   180   240   300    150    230    3170  180     310
+ city14         50   180    370      330      200  300    240    80   220   400    460    280    180   3530    240
+ city15        220   300    250      410      180  260    180   290   130   260    190    100    310   240     3320
+ ;
+ parameter
+ t(i,j)
+*insert travel time*
+/city1.city2 = 30
+city1.city4 = 25
+city1.city6 = 40
+city2.city1 = 30
+city2.city3 = 30
+city2.city5 = 20
+city2.city8 = 10
+city2.city10 = 50
+city3.city2 = 30
+city3.city11 = 15 
+city3.city13 = 20
+city4.city1 = 25
+city4.city7 = 30
+city4.city12 = 35
+city5.city2 = 20
+city5.city7 = 20
+city5.city11 = 30
+city6.city1 = 40
+city6.city8 = 15
+city6.city14 = 45
+city6.city15 = 20
+city7.city4 = 30
+city7.city5 = 20
+city7.city10= 15
+city8.city2 = 10
+city8.city6 = 15
+city8.city9 = 30
+city8.city13 = 40
+city9.city8 = 30
+city9.city11 = 25
+city10.city2 = 50
+city10.city7 = 15
+city11.city3 = 15
+city11.city5 = 30
+city11.city9 = 25
+city12.city4 = 35
+city12.city14 = 30
+city13.city3 = 20
+city13.city8 = 40
+city13.city15 = 20
+city14.city6 = 45
+city14.city12 = 30
+city15.city6 = 20
+city15.city13 = 20/
+
+c(i,j)
+*insert costs*
+/city1.city2 = 3000
+city1.city4 = 4000
+city1.city6 = 6000
+city2.city1 = 3000
+city2.city3 = 3500
+city2.city5 = 5000
+city2.city8 = 4000
+city2.city10 = 6000
+city3.city2 = 3500
+city3.city11 = 2500
+city3.city13 = 4500
+city4.city1 = 4000
+city4.city7 = 2000
+city4.city12 = 3000
+city5.city2 = 5000
+city5.city7 = 2500
+city5.city11 = 4000
+city6.city1 = 6000
+city6.city8 = 4500
+city6.city14 = 5000
+city6.city15 = 2000
+city7.city4 = 2000
+city7.city5 = 2500
+city7.city10 = 1500
+city8.city2 = 4000
+city8.city6 = 4500
+city8.city9 = 3500
+city8.city13 = 3500
+city9.city8 = 3500
+city9.city11 = 1500
+city10.city2 = 6000
+city10.city7 = 1500
+city11.city3 = 2500
+city11.city5 = 4000
+city11.city9 = 1500
+city12.city4 = 3000
+city12.city14 = 2500
+city13.city3 = 4500
+city13.city8 = 3500
+city13.city15 = 3000
+city14.city6 = 5000
+city14.city12 = 2500
+city15.city6 = 2000
+city15.city13 = 3000/
+
+
+;
+
+
+* Min spanning tree
+
+Set
+   a(i)   'assigned nodes'
+   uset(i)   'unassigned nodes'
+   nan(i) 'newly assigned node'
+   s      'sequence' / 1*16 /;
+
+Alias (i,ip,ipp);
+
+Set
+arcsSp(i,ip,ipp);
+
+Parameter
+   mst(i,ip,ipp)  'minimum spanning trees starting from all nodes'
+   fold(i,ip,ipp) 'folded minimum spanning trees'
+   darc(i,ip)     'directed arcs'
+   dmin           'min distance'
+   TotalCost(i)    'minimum spanning tree cost'
+   B;
+
+
+darc(i,ip) = max(c(i,ip),c(ip,i));
+
+loop(ip,
+   nan(ip) = yes;
+   a(i)    = nan(i);
+   uset(i)    = not a(i);
+   loop(s$card(nan),
+      nan(nan) = no;
+      dmin     = smin((a,uset)$darc(a,uset), darc(a,uset));
+      loop((a,uset)$(darc(a,uset) and dmin = darc(a,uset)),
+         mst(a,uset,ip) = ord(s);
+         dmin = 0;
+      );
+      nan(uset) = sum(a$(mst(a,uset,ip) = ord(s)), yes);
+      uset(nan) =  no;
+      a(nan) = yes;
+   );
+);
+
+option  mst:0:2:1;
+display mst;
+
+fold(i,ip,ipp)$(ord(i) < ord(ip)) =  mst(i,ip,ipp) - mst(ip,i,ipp);
+
+option  fold:0:2:1;
+display fold,dmin;
+
+
+loop(ipp,
+arcsSp(ipp,ip,i)$(mst(i,ip,ipp)>0 or mst(ip,i,ipp)>0)=yes;
+);
+TotalCost(i)=sum((ip,ipp)$(arcsSp(i,ip,ipp)),c(ip,ipp));
+
+B=smin(i,TotalCost(i));
+
+Display B;
+
+*Equations*
+
+
+Equation objectiveFunction;
+objectiveFunction.. G=e=sum(E(i,j), t(i,j) * sum(u, x(u,i,j) ) );
+
+equation Budget "Budget constraint";
+ Budget.. SUM(E(i,j)$(ord(i)<ord(j)), c(i,j) * y(i,j) ) =L= B;
+
+equation Linking(u,i,j) "Linking contraints between of variable x(u,j,i) and y(i,j) ";
+ Linking(u,E(i,j))$(ord(i)<ord(j))..
+  x(u,i,j) + x(u,j,i) =L= d(u,u) * y(i,j);
+
+equation Flow(u,v) Flow conservation constraints;
+ Flow(u,v)$( not sameas(u,v) )..
+  sum(i$( E(i,v) ), x(u,i,v) ) - sum(E(v,j), x(u,v,j) ) =E= d(u,v);
+  
+
+Model NetworkDesign *Min. Travel Time* /all/;
+Solve NetworkDesign min G using mip;
+Display E;
+
+
+* Extra information for line planning
+Parameter
+   repx_x(u,i, j) 'solution report x variable'
+   demandPassenger(i,j) demand of passengers travelling from i to j
+   cost(i,j) operational costs from node i to j;
+
+repx_x(u,i, j)=x.l(u, i, j);
+demandPassenger(i,j)=d(i,j);
+cost(i,j)=c(i,j);
+
+
+set Arcs(i, j) all connected nodes +> Network desigb model will select the best route;
+Arcs(i, j)$(ord(i) <> ord(j) and sum(u,x.l(u, i, j))>0) = yes;
+
+execute_unload "problem_1_nd.gdx" 
