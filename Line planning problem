@@ -1,0 +1,210 @@
+Sets
+V "Set of nodes"
+E(v,v) set of edges
+*using for line enumeration:
+Arcs(v,v);
+
+alias(v,i,j,o,d,u);
+
+Parameter
+t(i,j) distance from node i to j in scenario s
+repx_x(o,i,j) number of passengers starting their trip in o and traveling along ij in scenario i;
+
+$gdxin "problem_1_nd.gdx"
+$load v,e, t, repx_x, Arcs
+$gdxin
+
+
+
+*to ensure that we have edges
+E(i,j)$(Arcs(i,j)) =yes;
+
+E(i,j) = Arcs(i,j) or Arcs(j,i);
+
+
+
+***MODEL SPANNING TREE***
+*to enforce that all nodes are connected for each node as starting point*
+Free Variable
+F1 objective function value;
+
+Positive Variable
+y_ST(o,i,j) >0 if passengers travel from o using edge ij ;
+
+equations objF;
+objF.. F1 =e= sum((o,E), t(E)*y_ST(o,E));
+
+equation Flow;
+Flow(o,i).. sum(E(i,j), y_ST(o,i,j)) - sum(E(j,i), y_ST(o,j,i)) =e= -1 + card(i)$(ord(o) = ord(i));
+
+model SpanningTree /objF, Flow/;
+
+solve SpanningTree min F1 using lp;
+display y_ST.l;
+
+
+
+
+***MODEL SHORTEST PATH***
+*determine the shortest path for each node as starting point to each node as ending point*
+*e.g., 1-2, 1-3, 1-4, ..., 1-9, 2-1, 2-3, ..., 2-9, ...*
+Sets
+SpaTree(o,i,j) set of spanning trees for each origin node
+ijij(o,d,i,j) set of arcs that connect origin and destination node
+rel(o,d) if there's a connection between origin & destination node 
+SetTrip(o,d) if passengers travel from o to d;
+
+
+
+
+*set of spanning trees for each node o:
+SpaTree(o,i,j) = y_ST.l(o,i,j);
+
+*indicates that there's a connection between node o and node d:
+rel(o,d) = (sum(i$SpaTree(o,i,d),1)>0);
+
+*spanning tree which connects node o and d:
+ijij(o,d,i,j)$(SpaTree(o,i,j) and rel(o,d)) = yes;
+
+*if there's a passenger demand from node o to d:
+SetTrip(o,d)$(sum(i, repx_x(o,i,d)>0)) = yes;
+
+
+*MATHEMATICAL MODEL SHORTEST PATH*
+Binary Variable
+x_SP(o,d,i,j) 1 if passengers travel from o to d using edge ij (0 otherwise);
+
+Free Variable
+F2 objective function value;
+
+equation objF2;
+objF2.. F2 =e= sum((o,d,i,j)$(SpaTree(o,i,j) and rel(o,d) and ijij(o,d,i,j)), t(i,j)*x_SP(o,d,i,j));
+
+equation Flow2;
+Flow2(o,d,i)$(SetTrip(o,d) and rel(o,d)).. sum(ijij(o,d,i,j), x_SP(o,d,i,j)) - sum(ijij(o,d,j,i), x_SP(o,d,j,i)) =e= 0
+                                                                                                              +1$(ord(o)=ord(i))
+                                                                                                              -1$(ord(d)=ord(i));
+                                                                                                      
+model shortestPath /objF2, Flow2/;
+
+solve shortestPath min F2 using mip;
+display x_SP.l;
+
+
+
+
+***LINE PLANNING PROBLEM***
+Sets
+Lod(o,d) auxilary set: set of line candidates from shortest Path model
+Lodij(o,d,i,j) auxilary set: lines serving the edge ij in scenario s
+
+l set of line candidates (=((n-1)*n):2) /1*105/
+Lij(l,i,j) lines that serve the edge ij in scenario s
+Ln(l,i) auxilary set: set of lines that contain node i
+Luv(l,u,v) lines that connect nodes u and v directly in scenario s
+ukv(i,j) set of nodes with i<j
+;
+
+scalar counter;
+
+*generate set of lines:
+loop((o,d),
+    Lod(o,d)$(sum((i,j), x_SP.l(o,d,i,j) >0) and ord(o)<ord(d)) = yes;
+    );
+    
+*generate set Lodij (which lines serving edge ij)
+Lodij(o,d,i,j)$(x_SP.l(o,d,i,j)=1 and Lod(o,d)) = yes;
+
+Lodij(o,d,i,j) = Lodij(o,d,i,j) or Lodij(o,d,j,i);
+
+scalar counter;
+
+*generate set Lij and enumerate lines
+
+counter = 0;
+    loop((o,d)$Lod(o,d),
+    counter = counter + 1;
+        loop((i,j)$Lodij(o,d,i,j),
+            loop(l,
+            if(ord(l) = counter,
+            Lij(l,i,j) = yes );
+            );
+        );
+    );
+
+
+
+
+*generate set Ln (which lines contain node i)
+loop((l,i,j)$Lij(l,i,j),
+    Ln(l,i) = yes;
+    Ln(l,j) = yes;
+    );
+    
+*generate set ukv (nodes with i < j)
+ukv(i,j)$(ord(i)<ord(j)) = yes;
+
+*generate set Luv (which lines connect u and v directly)
+loop((l,u,v)$(Ln(l,u) and Ln(l,v) and ukv(u,v)),
+    Luv(l,u,v) = yes
+    );
+    
+
+Parameters
+demandPassenger(i,j) demand of passengers travelling from i to j
+k(l) operational costs of line l
+cost(i,j) operational costs from node i to j
+B available budget in scenario s
+C(i,j) maximal number of lines along edge ij
+tk total operational cost for all lines of scenario s;
+
+
+
+$gdxIn "problem_1_nd.gdx"
+$load demandPassenger, cost
+$gdxIn
+
+
+*calculate operational costs of each line
+k(l) = sum(Lij(l,i,j), cost(i,j));
+
+tk = sum(l, k(l));
+B = 0.8*(sum(l, k(l)));
+
+*edge capacity is randomly generated
+C(i,j)$(ord(i)<ord(j)) = (round(uniform(1, 3)));
+*copy c(i,j) for c(j,i) so that we consider edges
+c(i,j)$(ord(i)>ord(j)) = c(i,j);
+
+
+
+
+*MATHEMATICAL MODEL LINE PLANNING*
+Binary Variables
+y_LP(l) 1 if line od is selected in scenario s (0 otherwise)
+x_LP(u,v) 1 if a direct trip is feasible from i to j (0 otherwise);
+
+Free Variable
+Z objective function value;
+
+equation obj;
+obj.. sum((ukv(i,j)), (demandPassenger(i,j)+demandPassenger(j,i))*x_LP(i,j)) =e= Z;
+
+equation directTrips;
+directTrips(ukv(u,v)).. sum(Luv(l,u,v), y_LP(l)) =g= x_LP(u,v);
+
+equation minLines;
+minLines(E(i,j)).. sum(Lij(l,i,j), y_LP(l)) =g= 1;
+
+equation maxLines;
+maxLines(E(i,j)).. sum(Lij(l,i,j)$(ukv(i,j)), y_LP(l)) =l= C(i,j);
+
+equation budget;
+budget.. sum(l, k(l)*y_LP(l)) =l= B;
+
+model LinePlanning /obj, directTrips, minLines, maxLines, budget/;
+solve LinePlanning max Z using mip;
+
+display y_LP.l, x_LP.l;
+
+execute_unload "Problem2_lp.gdx"
