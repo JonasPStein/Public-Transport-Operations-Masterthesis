@@ -1,0 +1,139 @@
+$Title TimeTabling
+
+Set
+  l           "lines" /1*22/
+  h           "stops" /1*15/
+  ;
+
+
+alias (l, la);
+
+Parameters
+u(L,LA,H) "Transfer passenger"
+f(l,h) "Travel time"
+tau(l) "Headway"
+
+table u(L,LA,H) "Transfer passenger"
+        1  2   3   4   5   6   7   8   9   10   11   12   13   14    15
+8.11  130
+10.7  750
+7.19     700
+7.1      150
+7.3      645
+20.8     700
+2.20     430
+2.7      870
+8.3      500
+4.20     400
+2.8      150
+4.8      645
+19.1     430
+8.1      870
+4.7      500
+19.3     400
+19.5        1060
+18.5         630
+6.20        1060
+6.17         630
+8.14               450
+8.13               420
+12.14              180
+8.9                620
+13.7               450
+14.7               420
+13.11              180
+11.21                    300
+11.20                     50
+22.12                    300
+19.12                     50
+14.17                         500
+14.18                         780
+18.13                         500
+17.13                         780
+20.7                              200
+19.7                              440
+8.20                              440
+8.19                              200
+7.15                                  500
+16.8                                  500
+15.18                                                 240
+17.16                                                 240
+9.21                                                       330
+13.21                                                      420
+22.10                                                      330
+22.14                                                      420
+21.17                                                          300
+18.22                                                          300
+20.22                                                              240
+21.19                                                              240
+11.6                                                                  190
+5.12                                                                  190
+;
+
+table f(l,h) "travel time"
+            1  2  3  4  5  6  7  8  9  10  11  12  13  14  15
+1              0        20    40
+2             40        20     0
+3              0                       50
+4             50                        0
+5                 0                                20      40
+6                40                                20       0
+7          25 55     0          65 95
+8          70 40    95          30  0
+9                    0                         35
+10                  35                          0
+11         25        0    65                               85 
+12         60       85    20                                0
+13                  50     0  20               85
+14                  35    85  65                0
+15                                  0      25
+16                                 25       0
+17               20     65    85     100   35       0
+18               80     35    15       0   65     100
+19            70 100      45    60        115           0
+20            45 15       65    50          0         115
+21                        75                    0 115  30   95
+22                        40                  115   0   85  20
+
+;
+tau(l) =15;
+
+
+f(L,H) = mod( f(L,H), tau(l) );
+
+
+parameter delta(l,la,h) delta parameter;
+
+delta(l,la,h) = f(la,h) - f(l,h);
+
+delta(l,la,h)$( delta(l,la,h) < 0) = delta(l,la,h) + tau(l);
+
+
+********************************************************************************
+
+free variable TW "Total waiting time"
+
+integer variable w(l,la,h)   "Waiting time";
+integer variable t(l)       "Start time trip";
+binary variables  x(l,la,h)  "1, if headway shift of line l when changing from line l to line la (0, otherwise)";
+binary variables xt(l,la,h)  "1, if headway shift of line la when changing from line l to line la (0, otherwise)";
+
+********************************************************************************
+
+t.up(L) = tau(L)-1;
+
+
+Equation  totalWaitingTime      Total waiting time;
+totalWaitingTime..  TW =E= sum((l,la,h)$u(l,la,h), u(l,la,h)* w(l,la,h) );
+
+
+Equation  waintingTime(l,la,h)     waiting time at stop h from l to line la;
+waintingTime(l,la,h)$u(l,la,h)..
+   t(la) + delta(l,la,h) + tau(la) * xt(l,la,h)
+ - t(l) - tau(l) * x(l,la,h) =E= w(l,la,h);
+
+
+
+model timeTabling /all/;
+solve timeTabling minimizing TW using mip;
+display t.L,x.L,xt.L,w.L;
